@@ -1,4 +1,5 @@
 import commonjs from 'rollup-plugin-commonjs';
+import copy from 'rollup-plugin-copy';
 import resolve from 'rollup-plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
 import serve from 'rollup-plugin-serve';
@@ -24,6 +25,14 @@ export default {
     },
 
     plugins: [
+        copy({
+            targets:[
+                {
+                    src:'src/assets',
+                    dest:'dist'
+                }
+            ]
+        }),
 
         //  Toggle the booleans here to enable / disable Phaser 3 features:
         replace({
@@ -46,7 +55,7 @@ export default {
                 'node_modules/eventemitter3/**',
                 'node_modules/phaser/**'
             ],
-            exclude: [ 
+            exclude: [
                 'node_modules/phaser/src/polyfills/requestAnimationFrame.js'
             ],
             sourceMap: true,
@@ -54,7 +63,12 @@ export default {
         }),
 
         //  See https://www.npmjs.com/package/rollup-plugin-typescript2 for config options
-        typescript(),
+        typescript(
+            {
+                typescript: require('typescript'),
+                objectHashIgnoreUnknownHack: true,
+            }
+        ),
 
         //  See https://www.npmjs.com/package/rollup-plugin-serve for config options
         serve({
