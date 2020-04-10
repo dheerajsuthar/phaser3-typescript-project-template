@@ -1,10 +1,25 @@
 import WeaponGroup from '../groups/WeaponGroup'
 import Bullet from './Bullet'
 
+export interface PlayerInfo {
+    id: string;
+    team: string;
+    x: number;
+    y: number;
+}   
 export default class Player extends Phaser.Physics.Arcade.Image {
     _cursor: Phaser.Types.Input.Keyboard.CursorKeys
     _gun: WeaponGroup
     _speed: number
+    _id: string
+
+    get id() {
+        return this._id
+    }
+
+    get bulletGroup() {
+        return this._gun
+    }
 
     register(scene: Phaser.Scene) {
         scene.physics.add.existing(this)
@@ -15,9 +30,9 @@ export default class Player extends Phaser.Physics.Arcade.Image {
         bullet.remove()
     }
 
-    constructor(scene: Phaser.Scene, x: number, y: number, playerTexture: string, bulletTexture: string) {
+    constructor(scene: Phaser.Scene, id: string, x: number, y: number, playerTexture: string, bulletTexture: string) {
         super(scene, x, y, playerTexture)
-
+        this._id = id
         this.register(scene);
 
         this._cursor = scene.input.keyboard.createCursorKeys()
@@ -27,9 +42,6 @@ export default class Player extends Phaser.Physics.Arcade.Image {
         this.setCollideWorldBounds(true)
     }
 
-    get bulletGroup() {
-        return this._gun
-    }
 
     update() {
         super.update()
