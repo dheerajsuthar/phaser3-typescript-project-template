@@ -10,13 +10,18 @@ export default class Bullet extends Phaser.Physics.Arcade.Image {
         this.setVisible(true)
         this.setVelocityX(200)
     }
+
     update() {
         super.update()
 
         if (this.y < 0 || this.x < 0 || this.y > GAME_HEIGHT || this.x > GAME_WIDTH) {
-            this.setActive(false);
-            this.setVisible(false);
+           this.remove() 
         }
+    }
+
+    remove(){
+        this.setActive(false);
+        this.setVisible(false);
     }
 
 }
