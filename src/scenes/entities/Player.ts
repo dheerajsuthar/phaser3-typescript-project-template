@@ -1,12 +1,7 @@
 import WeaponGroup from '../groups/WeaponGroup'
 import Bullet from './Bullet'
 
-export interface PlayerInfo {
-    id: string;
-    team: string;
-    x: number;
-    y: number;
-}   
+  
 export default class Player extends Phaser.Physics.Arcade.Image {
     _cursor: Phaser.Types.Input.Keyboard.CursorKeys
     _gun: WeaponGroup

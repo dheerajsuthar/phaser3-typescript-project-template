@@ -2,7 +2,7 @@ var express = require('express');
 var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io').listen(server);
-
+        // "serve": "node --require source-map-support/register server.js"
 app.use(express.static(__dirname + '/dist'));
 
 app.get('/', function (req, res) {

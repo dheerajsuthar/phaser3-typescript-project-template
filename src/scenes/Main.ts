@@ -1,7 +1,8 @@
 import { GAME_HEIGHT, GAME_WIDTH } from '../config'
-import Player, { PlayerInfo } from './entities/Player'
+import Player from './entities/Player'
+import { PlayerInfo, PlayerTypes } from '../Contract'
 import TileMap from './tilemap/TileMap'
-import { GameObjects } from 'phaser'
+import { IOStates } from '../Contract'
 
 
 const IMAGE_PATH = 'assets/sprites/'
@@ -46,7 +47,8 @@ export default class Main extends Phaser.Scene {
     addPlayer(playerInfo: PlayerInfo): Player {
         let player: Player
         const { id, team, x, y } = playerInfo
-        if (team === 'blue') {
+        console.log(team, PlayerTypes.BLUE)
+        if (team === PlayerTypes.BLUE) {
             player = new Player(this, id, x, y, PLAYER_1, PLAYER_1_BULLET)
         } else {
             player = new Player(this, id, x, y, PLAYER_2, PLAYER_2_BULLET)
@@ -73,8 +75,9 @@ export default class Main extends Phaser.Scene {
     }
 
     socketSetup() {
+        const { CURRENT_PLAYERS, DISCONNECT, NEW_PLAYER } = IOStates
         this._otherPlayers = this.physics.add.group()
-        this._socket.on('currentPlayers', (players: Object) => {
+        this._socket.on(CURRENT_PLAYERS, (players: Object) => {
             Object.keys(players).forEach((id) => {
                 if (players[id].id === this._socket.id) {
                     this.addOwnPlayer(players[id]);
@@ -83,10 +86,10 @@ export default class Main extends Phaser.Scene {
                 }
             })
         })
-        this._socket.on('newPlayer', (playerInfo: PlayerInfo) => {
+        this._socket.on(NEW_PLAYER, (playerInfo: PlayerInfo) => {
             this.addOtherPlayer(playerInfo)
         })
-        this._socket.on('disconnect', (id: string) => {
+        this._socket.on(DISCONNECT, (id: string) => {
             const disconnectedPlayer = this._otherPlayers.getChildren().find((c) => (c as Player).id === id)
             if (disconnectedPlayer)
                 disconnectedPlayer.destroy()
@@ -110,6 +113,7 @@ export default class Main extends Phaser.Scene {
     }
 
     update() {
-        this._entities.forEach(e => e.update())
+        if (this._playerOne)
+            this._playerOne.update()
     }
 }
