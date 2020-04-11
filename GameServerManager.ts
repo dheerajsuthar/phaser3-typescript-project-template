@@ -6,13 +6,20 @@ export default class GameServerManger {
 
 
     constructor(io: SocketIO.Server) {
-        const { CONNECTION, DISCONNECT, NEW_PLAYER, CURRENT_PLAYERS } = IOStates
+        const { CONNECTION, DISCONNECT, NEW_PLAYER, CURRENT_PLAYERS, PLAYER_MOVEMENT, PLAYER_MOVED } = IOStates
         io.on(CONNECTION, (socket: SocketIO.Socket) => {
             const { id } = socket
             //currently limited to 2 players
             this._addPlayer(socket)
             socket.emit(CURRENT_PLAYERS, this._players);
             socket.broadcast.emit(NEW_PLAYER, this._players[id]);
+
+            //handlers
+            socket.on(PLAYER_MOVEMENT, (playerInfo: PlayerInfo) => {
+                this._players[id] = { ...this._players[id], ...playerInfo }
+                socket.broadcast.emit(PLAYER_MOVED, this._players[id])
+            })
+
             socket.on(DISCONNECT, () => {
                 this._removePlayer(socket)
                 io.emit(DISCONNECT, socket.id)

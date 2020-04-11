@@ -3,7 +3,7 @@ import Player from './entities/Player'
 import { PlayerInfo, PlayerTypes } from '../Contract'
 import TileMap from './tilemap/TileMap'
 import { IOStates } from '../Contract'
-
+import GameClientManger from '../GameClientManager'
 
 const IMAGE_PATH = 'assets/sprites/'
 const TILESET_1 = 'tileset_1'
@@ -18,10 +18,21 @@ export default class Main extends Phaser.Scene {
     _tileMap: TileMap
     _playerOne: Player
     _otherPlayers: Phaser.Physics.Arcade.Group
-    _entities: Array<Phaser.GameObjects.GameObject>
-    _socket: SocketIOClient.Socket
+    _gameClientManager: GameClientManger
     constructor() {
         super('main')
+    }
+
+    get otherPlayers() {
+        return this._otherPlayers
+    }
+
+    set otherPlayers(otherPlayers) {
+        this._otherPlayers = otherPlayers
+    }
+
+    get gameClientManager() {
+        return this._gameClientManager
     }
 
     debug() {
@@ -47,14 +58,12 @@ export default class Main extends Phaser.Scene {
     addPlayer(playerInfo: PlayerInfo): Player {
         let player: Player
         const { id, team, x, y } = playerInfo
-        console.log(team, PlayerTypes.BLUE)
         if (team === PlayerTypes.BLUE) {
-            player = new Player(this, id, x, y, PLAYER_1, PLAYER_1_BULLET)
+            player = new Player(this, id, "BLUE", x, y, PLAYER_1, PLAYER_1_BULLET)
         } else {
-            player = new Player(this, id, x, y, PLAYER_2, PLAYER_2_BULLET)
+            player = new Player(this, id, "RED", x, y, PLAYER_2, PLAYER_2_BULLET)
         }
 
-        this._entities.push(player)
 
         this.physics.add.collider(player, this._tileMap._mainLayer)
         this.physics.add.collider(player._gun, this._tileMap.mainLayer, player.removeBullet)
@@ -74,36 +83,13 @@ export default class Main extends Phaser.Scene {
         this._otherPlayers.add(this.addPlayer(playerInfo))
     }
 
-    socketSetup() {
-        const { CURRENT_PLAYERS, DISCONNECT, NEW_PLAYER } = IOStates
-        this._otherPlayers = this.physics.add.group()
-        this._socket.on(CURRENT_PLAYERS, (players: Object) => {
-            Object.keys(players).forEach((id) => {
-                if (players[id].id === this._socket.id) {
-                    this.addOwnPlayer(players[id]);
-                } else {
-                    this.addOtherPlayer(players[id]);
-                }
-            })
-        })
-        this._socket.on(NEW_PLAYER, (playerInfo: PlayerInfo) => {
-            this.addOtherPlayer(playerInfo)
-        })
-        this._socket.on(DISCONNECT, (id: string) => {
-            const disconnectedPlayer = this._otherPlayers.getChildren().find((c) => (c as Player).id === id)
-            if (disconnectedPlayer)
-                disconnectedPlayer.destroy()
-        })
-    }
+
 
     create() {
         this._tileMap = new TileMap(this, TILEMAP_1, TILESET_1, TILESET_1, LAYER_1)
-        this._entities = new Array<Phaser.GameObjects.GameObject>()
 
         //socket io connection
-        this._socket = io()
-        this.socketSetup();
-
+        this._gameClientManager = new GameClientManger(this, io())
 
         //debug
         this.debug()
