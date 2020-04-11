@@ -1,12 +1,34 @@
 import { IOStates, PlayerInfo, PlayerTypes, BulletInfo } from './src/Contract'
 import { GAME_WIDTH, GAME_HEIGHT } from './src/config'
 
-export function gameLoop(io: SocketIO.Server, bullets: Array<BulletInfo>) {
+const BULLET_SIZE = 4;
+const PLAYER_SIZE = 20;
+const COLLISION_DISTANCE = (BULLET_SIZE + PLAYER_SIZE) / 2
+
+export function gameLoop(io: SocketIO.Server, bullets: Array<BulletInfo>, players: {
+    [id: string]: PlayerInfo
+}) {
 
     for (let i = 0; i < bullets.length; i++) {
         let b = bullets[i]
         b.x += b.speedX
         b.y += b.speedY
+
+        Object.keys(players).forEach(id => {
+            if (id !== b.id) {
+                const { x, y, team } = players[id]
+                if (Math.abs(x - b.x) < COLLISION_DISTANCE && Math.abs(y - b.y) < COLLISION_DISTANCE) {
+                    console.log('player killed: ', b, players[id]);
+
+                    delete players[id]
+                    io.emit(IOStates.PLAYER_KILLED, {
+                        id,
+                        team
+                    })
+                }
+
+            }
+        })
 
         if (b.x < -10 || b.x > GAME_WIDTH + 10 || b.y < -10 || b.y > GAME_HEIGHT + 10) {
             bullets.splice(i, 1)

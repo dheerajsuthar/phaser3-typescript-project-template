@@ -27,7 +27,7 @@ const players: {
 ioEventHandler(io, players, bullets)
 
 //Game Loop
-setInterval(() => gameLoop(io, bullets), 16);
+setInterval(() => gameLoop(io, bullets, players), 16);
 
 
 server.listen(port, () => {

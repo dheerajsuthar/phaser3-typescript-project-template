@@ -20,6 +20,7 @@ export default class Main extends Phaser.Scene {
     _otherPlayers: Phaser.Physics.Arcade.Group
     _gameClientManager: GameClientManger
     _bullets: Array<Phaser.Physics.Arcade.Image> = []
+
     constructor() {
         super('main')
     }
@@ -28,7 +29,7 @@ export default class Main extends Phaser.Scene {
         return this._otherPlayers
     }
 
-    get bullets(){
+    get bullets() {
         return this._bullets
     }
 
@@ -48,6 +49,7 @@ export default class Main extends Phaser.Scene {
             faceColor: new Phaser.Display.Color(40, 39, 37, 255) // Color of colliding face edges
         })
     }
+
     preload() {
         this.load.path = IMAGE_PATH
         this.load.image(TILESET_1, 'tileset_1.png')

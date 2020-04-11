@@ -15,6 +15,11 @@ export interface BulletInfo {
     speedY: number
 }
 
+export interface KilledPlayerInfo {
+    id: string,
+    team: string
+}
+
 export const IOStates = {
     CONNECTED: 'connected',
     CONNECTION: 'connection',
@@ -24,7 +29,8 @@ export const IOStates = {
     PLAYER_MOVEMENT: 'playerMovement',
     PLAYER_MOVED: 'playerMoved',
     PLAYER_FIRED_BULLET: 'playerFiredBullet',
-    BULLETS_UPDATE: 'bulletUpdate'
+    BULLETS_UPDATE: 'bulletUpdate',
+    PLAYER_KILLED: 'playerKilled'
 }
 
 export const PlayerTypes = {
