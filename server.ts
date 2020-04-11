@@ -3,7 +3,9 @@ import http from 'http'
 import sio from 'socket.io'
 import cors from 'cors'
 
-import GameServerManger from './GameServerManager';
+import { ioEventHandler, gameLoop } from './GameServerManager';
+import { BulletInfo, PlayerInfo, IOStates } from './src/Contract';
+import { GAME_WIDTH, GAME_HEIGHT } from './src/config';
 
 const app = express();
 const server = http.createServer(app)
@@ -17,7 +19,16 @@ app.get('/', function (req, res) {
     res.sendFile(__dirname + '/index.html');
 });
 
-new GameServerManger(io)
+const bullets: Array<BulletInfo> = []
+const players: {
+    [id: string]: PlayerInfo
+} = {}
+
+ioEventHandler(io, players, bullets)
+
+//Game Loop
+setInterval(() => gameLoop(io, bullets), 16);
+
 
 server.listen(port, () => {
     console.log(`Listening on ${port}`);

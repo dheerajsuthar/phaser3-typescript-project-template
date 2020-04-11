@@ -11,20 +11,25 @@ const TILEMAP_1 = 'tilemap_1'
 const LAYER_1 = 'layer_1'
 const PLAYER_1 = 'player_1'
 const PLAYER_2 = 'player_2'
-const PLAYER_1_BULLET = 'player_1_bullet'
-const PLAYER_2_BULLET = 'player_2_bullet'
+export const PLAYER_1_BULLET = 'player_1_bullet'
+export const PLAYER_2_BULLET = 'player_2_bullet'
 const TILEMAP_PATH = 'assets/tilemaps/'
 export default class Main extends Phaser.Scene {
     _tileMap: TileMap
     _playerOne: Player
     _otherPlayers: Phaser.Physics.Arcade.Group
     _gameClientManager: GameClientManger
+    _bullets: Array<Phaser.Physics.Arcade.Image> = []
     constructor() {
         super('main')
     }
 
     get otherPlayers() {
         return this._otherPlayers
+    }
+
+    get bullets(){
+        return this._bullets
     }
 
     set otherPlayers(otherPlayers) {
@@ -59,14 +64,13 @@ export default class Main extends Phaser.Scene {
         let player: Player
         const { id, team, x, y } = playerInfo
         if (team === PlayerTypes.BLUE) {
-            player = new Player(this, id, "BLUE", x, y, PLAYER_1, PLAYER_1_BULLET)
+            player = new Player(this, id, "BLUE", x, y, PLAYER_1)
         } else {
-            player = new Player(this, id, "RED", x, y, PLAYER_2, PLAYER_2_BULLET)
+            player = new Player(this, id, "RED", x, y, PLAYER_2)
         }
 
 
         this.physics.add.collider(player, this._tileMap._mainLayer)
-        this.physics.add.collider(player._gun, this._tileMap.mainLayer, player.removeBullet)
 
         return player
     }

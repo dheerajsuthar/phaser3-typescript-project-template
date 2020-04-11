@@ -1,5 +1,3 @@
-import WeaponGroup from '../groups/WeaponGroup'
-import Bullet from './Bullet'
 import Main from '../Main'
 import { PlayerTypes, IOStates } from '../../Contract'
 
@@ -7,7 +5,6 @@ import { PlayerTypes, IOStates } from '../../Contract'
 
 export default class Player extends Phaser.Physics.Arcade.Image {
     _cursor: Phaser.Types.Input.Keyboard.CursorKeys
-    _gun: WeaponGroup
     _speed: number
     _id: string
     _team: keyof typeof PlayerTypes
@@ -16,13 +13,10 @@ export default class Player extends Phaser.Physics.Arcade.Image {
         y: number
     }
     _scene: Main
+    _bulletFired: boolean = false
 
     get id() {
         return this._id
-    }
-
-    get bulletGroup() {
-        return this._gun
     }
 
     register() {
@@ -30,11 +24,7 @@ export default class Player extends Phaser.Physics.Arcade.Image {
         this._scene.add.existing(this)
     }
 
-    removeBullet(bullet: Bullet, _: any) {
-        bullet.remove()
-    }
-
-    constructor(scene: Main, id: string, team: keyof typeof PlayerTypes, x: number, y: number, playerTexture: string, bulletTexture: string) {
+    constructor(scene: Main, id: string, team: keyof typeof PlayerTypes, x: number, y: number, playerTexture: string) {
         super(scene, x, y, playerTexture)
         this._id = id
         this._scene = scene
@@ -47,8 +37,6 @@ export default class Player extends Phaser.Physics.Arcade.Image {
         this._cursor = scene.input.keyboard.createCursorKeys()
         this._speed = 200
 
-        this._gun = new WeaponGroup(scene, Bullet, bulletTexture)
-
         this.register()
         this.setCollideWorldBounds(true)
     }
@@ -56,7 +44,9 @@ export default class Player extends Phaser.Physics.Arcade.Image {
     updateLastPosition() {
         if (this._lastPosition.x !== this.x || this._lastPosition.y !== this.y) {
             const { gameClientManager } = this._scene
-            gameClientManager.sendToServer(IOStates.PLAYER_MOVEMENT, { id: this._id, team: this._team, ...this._lastPosition })
+            gameClientManager.sendToServer(IOStates.PLAYER_MOVEMENT, {
+                id: this._id, team: this._team, x: this.x, y: this.y, rotation: this.rotation
+            })
             this._lastPosition = {
                 x: this.x,
                 y: this.y
@@ -64,33 +54,56 @@ export default class Player extends Phaser.Physics.Arcade.Image {
         }
     }
 
+    updateMovement() {
+        const { _team } = this
+        if (this._cursor.left.isDown) {
+            this.rotation = _team === "BLUE" ? Math.PI : 0
+            this.setVelocityX(-this._speed)
+        } else if (this._cursor.right.isDown) {
+            this.rotation = _team === "BLUE" ? 0 : Math.PI
+            this.setVelocityX(this._speed)
+        } else if (this._cursor.up.isDown) {
+            this.rotation = _team === "BLUE" ? -Math.PI / 2 : Math.PI / 2
+            this.setVelocityY(-this._speed)
+        } else if (this._cursor.down.isDown) {
+            this.rotation = _team === "BLUE" ? Math.PI / 2 : -Math.PI / 2
+            this.setVelocityY(this._speed)
+        } else {
+            this.setVelocity(0, 0)
+        }
+    }
+
     update() {
         super.update()
 
-        if (this._cursor.space.isDown) {
-            this._gun.fire(this.x, this.y)
-        }
-        if (this._cursor.left.isDown) {
-            this.setVelocityX(-this._speed)
-        } else if (this._cursor.right.isDown) {
-            this.setVelocityX(this._speed)
-        } else {
-            this.setVelocityX(0)
-        }
-
-        // Vertical movement
-        if (this._cursor.up.isDown) {
-            this.setVelocityY(-this._speed)
-        } else if (this._cursor.down.isDown) {
-            this.setVelocityY(this._speed)
-        } else {
-            this.setVelocityY(0)
+        //disallow diagonal movment
+        if (
+            this._cursor.up.isDown && this._cursor.left.isDown
+            || this._cursor.up.isDown && this._cursor.right.isDown
+            || this._cursor.down.isDown && this._cursor.left.isDown
+            || this._cursor.down.isDown && this._cursor.right.isDown
+        ) {
+            return;
         }
 
-        // update bullets
-        this._gun.getChildren().forEach(c => c.update())
+        this.updateMovement()
 
-        // update last position
+        if (!this._bulletFired && this._cursor.space.isDown) {
+            this._bulletFired = true
+            const { _id, x, y, rotation, _team } = this
+            this._scene._gameClientManager.sendToServer(IOStates.PLAYER_FIRED_BULLET, {
+                x,
+                y,
+                rotation,
+                id: _id,
+                team: _team
+            })
+        } 
+
+        if(!this._cursor.space.isDown) {
+            this._bulletFired = false
+        }
+
         this.updateLastPosition()
 
     }

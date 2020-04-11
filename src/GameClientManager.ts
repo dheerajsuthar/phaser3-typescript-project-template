@@ -1,6 +1,7 @@
-import { IOStates, PlayerInfo, PlayerTypes } from './Contract'
-import Main from './scenes/Main'
+import { IOStates, PlayerInfo, PlayerTypes, BulletInfo } from './Contract'
+import Main, { PLAYER_1_BULLET, PLAYER_2_BULLET } from './scenes/Main'
 import Player from './scenes/entities/Player'
+import Bullet from './scenes/entities/Bullet'
 
 export default class GameClientManger {
     _socket: SocketIOClient.Socket
@@ -13,7 +14,7 @@ export default class GameClientManger {
     }
 
     socketSetup() {
-        const { CURRENT_PLAYERS, DISCONNECT, NEW_PLAYER, PLAYER_MOVED } = IOStates
+        const { CURRENT_PLAYERS, DISCONNECT, NEW_PLAYER, PLAYER_MOVED, BULLETS_UPDATE } = IOStates
         this._scene.otherPlayers = this._scene.physics.add.group()
         this._socket.on(CURRENT_PLAYERS, (players: Object) => {
             Object.keys(players).forEach((id) => {
@@ -27,9 +28,28 @@ export default class GameClientManger {
         this._socket.on(NEW_PLAYER, (playerInfo: PlayerInfo) => {
             this._scene.addOtherPlayer(playerInfo)
         })
-        this._socket.on(PLAYER_MOVED, ({ id, x, y }: PlayerInfo) => {
+        this._socket.on(PLAYER_MOVED, ({ id, x, y, rotation }: PlayerInfo) => {
             const movedPlayer = <Player>this._scene.otherPlayers.getChildren().find((c) => (c as Player).id === id)
-            movedPlayer.setPosition(x, y)
+            movedPlayer.setPosition(x, y, rotation)
+        })
+        this._socket.on(BULLETS_UPDATE, (serverBullets: Array<BulletInfo>) => {
+            const { bullets } = this._scene
+            serverBullets.forEach((b, i) => {
+                if (bullets[i] === undefined) {
+                    const texture = b.team == PlayerTypes.BLUE ? PLAYER_1_BULLET : PLAYER_2_BULLET
+                    bullets[i] = new Bullet(this._scene, b.x, b.y, texture)
+                } else {
+                    bullets[i].x = b.x
+                    bullets[i].y = b.y
+                }
+            })
+
+            for (let index = serverBullets.length; index < bullets.length; index++) {
+                bullets[index].destroy()
+                bullets.splice(index, 1)
+                index--
+            }
+
         })
         this._socket.on(DISCONNECT, (id: string) => {
             const disconnectedPlayer = this._scene.otherPlayers.getChildren().find((c) => (c as Player).id === id)
